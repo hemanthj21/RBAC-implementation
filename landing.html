@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>RBAC Hospital - Landing</title>
+    <title>Vanuska Hospital - Landing</title>
 </head>
 <body>
     <h1>Welcome, {{ username }}!</h1>
-    <h2>Your Permissions:</h2>
+    <h2>You have the following Permissions:</h2>
     <ul>
         {% for permission in user_permissions %}
             <li>{{ permission }}</li>
