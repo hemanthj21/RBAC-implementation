@@ -17,10 +17,10 @@ if not os.path.exists(excel_file):
 users_table = pd.read_excel(excel_file)
 
 roles = {
-    'Admin': ['view_patients', 'add_patients', 'edit_patients', 'delete_patients', 'view_reports', 'generate_reports'],
+    'Admin': ['view_patients', 'add_patients', 'edit_patients', 'delete_patients'],
     'Doctor': ['view_patients', 'add_patients', 'edit_patients', 'view_reports', 'generate_reports'],
     'Nurse': ['view_patients', 'view_reports'],
-    'Patient': ['view self'],
+    'Patient': ['view_own_reports'],
     'Staff': ['view_patients']
 }
 
@@ -31,7 +31,7 @@ permissions = {
     'delete_patients': 'Delete Patients',
     'view_reports': 'View Reports',
     'generate_reports': 'Generate Reports',
-    'view self': 'View Self'
+    'view_own_reports': 'View own Reports'
 }
 
 def get_user_role(username):
