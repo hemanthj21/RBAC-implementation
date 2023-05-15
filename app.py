@@ -4,7 +4,7 @@ import pandas as pd
 import os
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
+app.secret_key = 'This_is_a_top_secret_key'
 
 bcrypt = Bcrypt()
 
