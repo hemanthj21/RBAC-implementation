@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vanuska Hospital - Register</title>
+</head>
+<body>
+    <h1>Register</h1>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="{{ message[1] }}">{{ message[0] }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    <form action="/register" method="POST">
+        <div>
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <div>
+            <label for="confirm_password">Confirm Password:</label>
+            <input type="password" id="confirm_password" name="confirm_password" required>
+        </div>
+        <div>
+            <input type="submit" value="Register" disabled>
+        </div>
+    </form>
+
+    <script>
+        // Enable the submit button when the passwords match and meet complexity requirements
+        document.getElementById('confirm_password').addEventListener('input', function () {
+            var password = document.getElementById('password').value;
+            var confirm_password = this.value;
+
+            var isValid = password === confirm_password;
+            var isComplex = /^(?=.*[A-Z])(?=.*\d)(?=.*\W).{8,}$/.test(password);
+
+            document.querySelector('input[type="submit"]').disabled = !(isValid && isComplex);
+        });
+    </script>
+</body>
+</html>

@@ -1,23 +1,33 @@
-import flask
-from flask import Flask, render_template, request, redirect, flash
+from flask import Flask, render_template, request, redirect, flash, session
 from flask_bcrypt import Bcrypt
 import pandas as pd
+import os
 
 app = Flask(__name__)
-app.secret_key = 'this_is_a_secret_key'
+app.secret_key = 'your_secret_key'
 
 bcrypt = Bcrypt()
 
-# Load the users data from Excel file
+# Load the users data from Excel file or create a new file if it doesn't exist
 excel_file = 'users.xlsx'
-users_table = pd.read_excel(excel_file)
+if not os.path.exists(excel_file):
+    users_table = pd.DataFrame(columns=['username', 'password', 'permissions'])
+    users_table.to_excel(excel_file, index=False)
+
+
+def get_user_permissions(username):
+    user = users_table.loc[users_table['username'] == username]
+    if not user.empty:
+        permissions = user['permissions'].values[0]
+        return permissions
+    return None
 
 # Route for the home page
 @app.route('/')
 def home():
     if 'username' in session:
         return redirect('/landing')
-    return render_template('index.html')
+    return render_template('welcome.html')
 
 # Route for user registration form
 @app.route('/register', methods=['GET', 'POST'])
@@ -41,6 +51,7 @@ def register():
             flash('Passwords do not match.', 'error')
             return redirect('/register')
 
+        users_table = pd.read_excel(excel_file)
         existing_user = users_table.loc[users_table['username'] == username]
         if not existing_user.empty:
             flash('Username already exists.', 'error')
@@ -48,7 +59,7 @@ def register():
 
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
 
-        new_user = pd.DataFrame({'username': [username], 'password': [hashed_password]})
+        new_user = pd.DataFrame({'username': [username], 'password': [hashed_password], 'permissions': ['']})
         users_table = users_table.append(new_user, ignore_index=True)
         users_table.to_excel(excel_file, index=False)
 
@@ -64,6 +75,7 @@ def login():
         username = request.form.get('username')
         password = request.form.get('password')
 
+        users_table = pd.read_excel(excel_file)
         user = users_table.loc[users_table['username'] == username]
 
         if user.empty or not bcrypt.check_password_hash(user['password'].values[0], password):
@@ -80,9 +92,8 @@ def login():
 def landing():
     if 'username' in session:
         username = session['username']
-        user_permissions = get_user_permissions(username)  # Replace with your logic to fetch user permissions
+        user_permissions = get_user_permissions(username)
         return render_template('landing.html', username=username, user_permissions=user_permissions)
-
     return redirect('/login')
 
 # Route for user logout
