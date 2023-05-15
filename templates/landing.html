@@ -4,13 +4,18 @@
     <title>Vanuska Hospital - Landing</title>
 </head>
 <body>
-    <h1>Welcome, {{ username }}!</h1>
-    <h2>You have the following Permissions:</h2>
+    {% if user_role == 'Doctor' %}
+        <h1>Welcome, Dr. {{ username }}</h1>
+    {% else %}
+        <h1>Welcome, {{ username }}</h1>
+    {% endif %}
+
+    <h2>Your role permissions are:</h2>
     <ul>
         {% for permission in user_permissions %}
             <li>{{ permission }}</li>
         {% endfor %}
     </ul>
-    <a href="/logout">Logout</a>
+    <p><a href="/logout">Logout</a></p>
 </body>
 </html>

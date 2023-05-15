@@ -1,0 +1,8 @@
+Requires Python 3.0 and above
+app.py contains the app routes and backend logic for roles and permissions
+templates contains the html skeletons for each page
+user login information and roles are saved in a local excel table
+(Optional) Can setup using a venv script to use a virtual environment using the following commands:
+    python -m venv venv
+    venv\Scripts\activate
+use Setup.bat to install requirements from requirements.txt and run the app

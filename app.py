@@ -11,16 +11,40 @@ bcrypt = Bcrypt()
 # Load the users data from Excel file or create a new file if it doesn't exist
 excel_file = 'users.xlsx'
 if not os.path.exists(excel_file):
-    users_table = pd.DataFrame(columns=['username', 'password', 'permissions'])
+    users_table = pd.DataFrame(columns=['username', 'password', 'role'])
     users_table.to_excel(excel_file, index=False)
 
+users_table = pd.read_excel(excel_file)
 
-def get_user_permissions(username):
+roles = {
+    'Admin': ['view_patients', 'add_patients', 'edit_patients', 'delete_patients', 'view_reports', 'generate_reports'],
+    'Doctor': ['view_patients', 'add_patients', 'edit_patients', 'view_reports', 'generate_reports'],
+    'Nurse': ['view_patients', 'view_reports'],
+    'Patient': ['view self'],
+    'Staff': ['view_patients']
+}
+
+permissions = {
+    'view_patients': 'View Patients',
+    'add_patients': 'Add Patients',
+    'edit_patients': 'Edit Patients',
+    'delete_patients': 'Delete Patients',
+    'view_reports': 'View Reports',
+    'generate_reports': 'Generate Reports',
+    'view self': 'View Self'
+}
+
+def get_user_role(username):
     user = users_table.loc[users_table['username'] == username]
     if not user.empty:
-        permissions = user['permissions'].values[0]
-        return permissions
+        return user['role'].values[0]
     return None
+
+def get_permissions_for_role(role):
+    if role in roles:
+        return [permissions[permission] for permission in roles[role]]
+    return []
+
 
 # Route for the home page
 @app.route('/')
@@ -36,6 +60,7 @@ def register():
         username = request.form.get('username')
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
+        role = request.form.get('role')
 
         # Password complexity validation
         has_capital = any(char.isupper() for char in password)
@@ -51,6 +76,16 @@ def register():
             flash('Passwords do not match.', 'error')
             return redirect('/register')
 
+        if not is_valid_password:
+            flash(
+                'Invalid password. Password must have at least one capital letter, one number, one symbol, and a minimum length of 8 characters.',
+                'error')
+            return redirect('/register')
+
+        if password != confirm_password:
+            flash('Passwords do not match.', 'error')
+            return redirect('/register')
+
         users_table = pd.read_excel(excel_file)
         existing_user = users_table.loc[users_table['username'] == username]
         if not existing_user.empty:
@@ -59,14 +94,15 @@ def register():
 
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
 
-        new_user = pd.DataFrame({'username': [username], 'password': [hashed_password], 'permissions': ['']})
-        users_table = users_table.append(new_user, ignore_index=True)
+        new_user = pd.DataFrame({'username': [username], 'password': [hashed_password], 'role': [role]})
+        users_table = pd.concat([users_table, new_user])
         users_table.to_excel(excel_file, index=False)
 
         flash('Registration successful. You can now log in.', 'success')
         return redirect('/')
 
     return render_template('register.html')
+
 
 # Route for user login form
 @app.route('/login', methods=['GET', 'POST'])
@@ -75,10 +111,14 @@ def login():
         username = request.form.get('username')
         password = request.form.get('password')
 
-        users_table = pd.read_excel(excel_file)
         user = users_table.loc[users_table['username'] == username]
 
-        if user.empty or not bcrypt.check_password_hash(user['password'].values[0], password):
+        if user.empty:
+            flash('Invalid username or password.', 'error')
+            return redirect('/login')
+
+        hashed_password = user['password'].values[0]
+        if not bcrypt.check_password_hash(hashed_password, password):
             flash('Invalid username or password.', 'error')
             return redirect('/login')
 
@@ -87,20 +127,23 @@ def login():
 
     return render_template('login.html')
 
+
 # Route for user landing page
 @app.route('/landing')
 def landing():
     if 'username' in session:
         username = session['username']
-        user_permissions = get_user_permissions(username)
+        user_role = get_user_role(username)
+        user_permissions = get_permissions_for_role(user_role)
         return render_template('landing.html', username=username, user_permissions=user_permissions)
-    return redirect('/login')
+
+    return redirect('/')
 
 # Route for user logout
 @app.route('/logout')
 def logout():
     session.pop('username', None)
-    return redirect('/login')
+    return redirect('/')
 
 if __name__ == '__main__':
     app.run(debug=True)
